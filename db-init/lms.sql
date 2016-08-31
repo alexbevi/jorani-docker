@@ -1,21 +1,8 @@
 -- ---------------------------------------------------
 -- Jorani Schema definition
--- 
--- This file is part of Jorani.
--- 
---  Jorani is free software: you can redistribute it and/or modify
---  it under the terms of the GNU General Public License as published by
---  the Free Software Foundation, either version 3 of the License, or
---  (at your option) any later version.
--- 
---  Jorani is distributed in the hope that it will be useful,
---  but WITHOUT ANY WARRANTY; without even the implied warranty of
---  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---  GNU General Public License for more details.
--- 
---  You should have received a copy of the GNU General Public License
---  along with Jorani.  If not, see <http://www.gnu.org/licenses/>.
--- @copyright  Copyright (c) 2014 - 2015 Benjamin BALET
+--
+-- @license      http://opensource.org/licenses/AGPL-3.0 AGPL-3.0
+-- @copyright  Copyright (c) 2014-2016 Benjamin BALET
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -187,6 +174,7 @@ CREATE TABLE IF NOT EXISTS `contracts` (
   `endentdate` varchar(5) CHARACTER SET utf8 NOT NULL,
   `weekly_duration` int(11) DEFAULT NULL COMMENT 'Approximate duration of work per week (in minutes)',
   `daily_duration` int(11) DEFAULT NULL COMMENT 'Approximate duration of work per day and (in minutes)',
+  `default_leave_type` INT NULL DEFAULT NULL COMMENT 'default leave type for the contract (overwrite default type set in config file).',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
 
@@ -198,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `dayoffs` (
   `contract` int(11) NOT NULL COMMENT 'Contract id',
   `date` date NOT NULL COMMENT 'Date of the day off',
   `type` int(11) NOT NULL COMMENT 'Half or full day',
-  `title` varchar(128) CHARACTER SET latin1 NOT NULL COMMENT 'Description of day off',
+  `title` varchar(128) CHARACTER SET utf8 NOT NULL COMMENT 'Description of day off',
   PRIMARY KEY (`id`),
   KEY `type` (`type`),
   KEY `contract` (`contract`)
@@ -403,7 +391,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `position` int(11) NOT NULL,
   `datehired` date DEFAULT NULL COMMENT 'Date hired / Started',
   `identifier` varchar(64) CHARACTER SET utf8 NOT NULL COMMENT 'Internal/company identifier',
-  `language` varchar(2) CHARACTER SET utf8 NOT NULL DEFAULT 'en',
+  `language` varchar(5) CHARACTER SET utf8 NOT NULL DEFAULT 'en',
   `ldap_path` varchar(1024) DEFAULT NULL COMMENT 'LDAP Path for complex authentication schemes',
   `active` bool DEFAULT TRUE COMMENT 'Is user active',
   `timezone` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT 'Timezone of user',
@@ -431,6 +419,40 @@ CREATE TABLE IF NOT EXISTS `delegations` (
   PRIMARY KEY (`id`),
   KEY `manager_id` (`manager_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Delegation of approval' AUTO_INCREMENT=1 ;
+
+--
+-- Structure of table `excluded_types`
+--
+CREATE TABLE IF NOT EXISTS `excluded_types` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Id of exclusion',
+  `contract_id` int(11) NOT NULL COMMENT 'Id of contract',
+  `type_id` int(11) NOT NULL COMMENT 'Id of leave ype to be excluded to the contract',
+  PRIMARY KEY (`id`),
+  KEY `contract_id` (`contract_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Exclude a leave type from a contract' AUTO_INCREMENT=1 ;
+
+--
+-- Structure of table `leaves_history`
+--
+CREATE TABLE IF NOT EXISTS `leaves_history` (
+  `id` int(11) NOT NULL,
+  `startdate` date DEFAULT NULL,
+  `enddate` date DEFAULT NULL,
+  `status` int(11) DEFAULT NULL,
+  `employee` int(11) DEFAULT NULL,
+  `cause` text,
+  `startdatetype` varchar(12) DEFAULT NULL,
+  `enddatetype` varchar(12) DEFAULT NULL,
+  `duration` decimal(10,2) DEFAULT NULL,
+  `type` int(11) DEFAULT NULL,
+  `change_id` int(11) NOT NULL AUTO_INCREMENT,
+  `change_type` int(11) NOT NULL,
+  `changed_by` int(11) NOT NULL,
+  `change_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`change_id`),
+  KEY `changed_by` (`changed_by`),
+  KEY `change_date` (`change_date`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='List of changes in leave requests table' COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
 
 -- Tables for OAuth2 server
 CREATE TABLE oauth_clients (client_id VARCHAR(80) NOT NULL, client_secret VARCHAR(80) NOT NULL, redirect_uri VARCHAR(2000) NOT NULL, grant_types VARCHAR(80), scope VARCHAR(100), user_id VARCHAR(80), CONSTRAINT clients_client_id_pk PRIMARY KEY (client_id));
