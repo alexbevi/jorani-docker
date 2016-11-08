@@ -42,4 +42,5 @@ env APACHE_LOG_DIR      /var/log/apache2
 COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
 
 EXPOSE 80
-ENTRYPOINT [ "/usr/sbin/apache2", "-DFOREGROUND" ]
+COPY apache2-foreground /usr/local/bin/
+CMD ["apache2-foreground"]
